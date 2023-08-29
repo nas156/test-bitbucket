@@ -1,3 +1,4 @@
+// TODO - separate some business logic to separate services
 import {InvalidArgumentError} from "commander";
 import npmRegistryFetch from "npm-registry-fetch";
 

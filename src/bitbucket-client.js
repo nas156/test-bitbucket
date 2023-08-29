@@ -8,39 +8,6 @@ export class BitbucketClient {
         this.apiUrl = `${this.API_BASE_URL}/repositories/${repository}`;
     }
 
-    handleErrorResponse(response) {
-        if (response?.type === 'error') {
-            throw new Error(response.error.message);
-        }
-        return response;
-    }
-
-    async makeApiRequest(endpoint, method = 'GET', body = null, headers = {}) {
-        return fetch(`${this.apiUrl}/${endpoint}`, {
-            method,
-            headers: {
-                'Authorization': `Bearer ${this.authToken}`,
-                ...headers,
-            },
-            body
-        })
-    }
-
-    async formDataApiRequest(endpoint, method = 'POST', body, headers = {}) {
-        const response = await this.makeApiRequest(endpoint, method, body, headers);
-        const responseData = await response.text();
-        if (responseData) {
-            return this.handleErrorResponse(JSON.parse(responseData));
-        }
-        return responseData;
-    }
-
-    async apiRequest(endpoint, method = 'GET', body = null, headers = {}) {
-        const response = await this.makeApiRequest(endpoint, method, body ? JSON.stringify(body) : null, headers);
-        const responseData = await response.json();
-        return this.handleErrorResponse(responseData);
-    }
-
     async commitFile(filePath, content, message, branchName = this.targetBranch) {
         try {
             const endpoint = 'src';
@@ -88,5 +55,39 @@ export class BitbucketClient {
         } catch (e) {
             throw new Error('Error reading file: ' + (e.message || e))
         }
+    }
+
+    handleErrorResponse(response) {
+        if (response?.type === 'error') {
+            throw new Error(response.error.message);
+        }
+        return response;
+    }
+
+    // TODO - extract http client to separate abstraction(will help to deal with unclear naming)
+    async makeHttpRequest(endpoint, method = 'GET', body = null, headers = {}) {
+        return fetch(`${this.apiUrl}/${endpoint}`, {
+            method,
+            headers: {
+                'Authorization': `Bearer ${this.authToken}`,
+                ...headers,
+            },
+            body
+        })
+    }
+
+    async formDataApiRequest(endpoint, method = 'POST', body, headers = {}) {
+        const response = await this.makeHttpRequest(endpoint, method, body, headers);
+        const responseData = await response.text();
+        if (responseData) {
+            return this.handleErrorResponse(JSON.parse(responseData));
+        }
+        return responseData;
+    }
+
+    async apiRequest(endpoint, method = 'GET', body = null, headers = {}) {
+        const response = await this.makeHttpRequest(endpoint, method, body ? JSON.stringify(body) : null, headers);
+        const responseData = await response.json();
+        return this.handleErrorResponse(responseData);
     }
 }
